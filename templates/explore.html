@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Explorer - House Price AI</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f9f9f9; }
+
+        header { 
+            width: 100%; 
+            padding: 20px 40px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: linear-gradient(135deg, #8a2be2, #4169e1);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .logo a { color: white; text-decoration: none; display: flex; align-items: center; }
+        .logo svg { stroke: white; margin-right: 10px; }
+        .logo span { font-weight: 700; font-size: 1.2rem; }
+
+        .btn-home { 
+            background-color: rgba(255,255,255,0.2); 
+            color: white; 
+            border: 1px solid rgba(255,255,255,0.4); 
+            padding: 8px 20px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-home:hover { background-color: white; color: #8a2be2; }
+
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+
+        .page-title { text-align: center; color: #333; margin-bottom: 40px; }
+        .page-title h1 { font-size: 2.5rem; font-weight: 800; color: #1a1a1a; }
+        .page-title p { color: #666; margin-top: 10px; font-size: 1.1rem; }
+
+        .chart-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            border: 1px solid #eee;
+            margin-bottom: 40px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .chart-title { font-size: 1.2rem; font-weight: 700; color: #8a2be2; display: flex; align-items: center; gap: 10px; }
+        
+        .chart-container { position: relative; height: 400px; width: 100%; }
+
+        .loading { text-align: center; padding: 50px; color: #999; }
+
+        select {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 2px solid #8a2be2;
+            outline: none;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        #neighborhood-section { display: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <a href="/">
+                <!---<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 15l-6-6-6 6"/>
+                </svg>--->
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="height: 40px; margin-right: 12px; vertical-align: middle;">
+                <span>SmartVal</span>
+            </a>
+        </div>
+        <a href="/" class="btn-home">
+            <span class="material-symbols-rounded">home</span>
+            Home
+        </a>
+    </header>
+
+    <div class="container">
+        <div class="page-title">
+            <h1>Market Insights</h1>
+            <p>Analyze real estate trends and district valuations in Istanbul.</p>
+        </div>
+
+        <!-- İSTANBUL GENELİ GRAFİĞİ -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="chart-title">
+                    <span class="material-symbols-rounded">equalizer</span>
+                    Istanbul: Average Property Prices by District (TL)
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="districtChart"></canvas>
+            </div>
+            <div id="loading-district" class="loading">Loading district data...</div>
+        </div>
+
+        <!-- MAHALLE DETAYI BÖLÜMÜ -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="chart-title">
+                    <span class="material-symbols-rounded">location_on</span>
+                    Neighborhood Insights
+                </div>
+                <div class="filter-box">
+                    <select id="district-selector">
+                        <option value="" disabled selected>Select a District to view details</option>
+                        {% for district in districts %}
+                            <option value="{{ district }}">{{ district }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div id="neighborhood-section">
+                <div class="chart-container">
+                    <canvas id="neighborhoodChart"></canvas>
+                </div>
+            </div>
+            <div id="neigh-placeholder" class="loading">Please select a district to see neighborhood statistics.</div>
+        </div>
+    </div>
+
+    <script>
+        let neighborhoodChartInstance = null;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // 1. İLÇE GRAFİĞİNİ YÜKLE
+            fetch('/api/district-stats')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loading-district').style.display = 'none';
+                    const ctx = document.getElementById('districtChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Avg Price',
+                                data: data.data,
+                                backgroundColor: 'rgba(138, 43, 226, 0.6)',
+                                borderColor: 'rgba(138, 43, 226, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                y: { ticks: { callback: v => v / 1000000 + 'M' } }
+                            }
+                        }
+                    });
+                });
+
+            // 2. MAHALLE GRAFİĞİ TETİKLEYİCİSİ
+            const selector = document.getElementById('district-selector');
+            selector.addEventListener('change', function() {
+                const district = this.value;
+                document.getElementById('neigh-placeholder').innerText = "Loading " + district + " neighborhoods...";
+                document.getElementById('neigh-placeholder').style.display = 'block';
+                document.getElementById('neighborhood-section').style.display = 'none';
+
+                fetch(`/api/neighborhood-stats/${district}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('neigh-placeholder').style.display = 'none';
+                        document.getElementById('neighborhood-section').style.display = 'block';
+
+                        const ctx = document.getElementById('neighborhoodChart').getContext('2d');
+                        
+                        // Eğer önceden bir grafik varsa onu yok et (üst üste binmemesi için)
+                        if (neighborhoodChartInstance) {
+                            neighborhoodChartInstance.destroy();
+                        }
+
+                        neighborhoodChartInstance = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: data.labels,
+                                datasets: [{
+                                    label: district + ' Neighborhoods (Avg Price TL)',
+                                    data: data.data,
+                                    backgroundColor: 'rgba(65, 105, 225, 0.6)',
+                                    borderColor: 'rgba(65, 105, 225, 1)',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: true }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        ticks: { callback: v => v.toLocaleString('tr-TR') + ' TL' }
+                                    }
+                                }
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        document.getElementById('neigh-placeholder').innerText = "Error loading data.";
+                    });
+            });
+        });
+    </script>
+</body>
+</html>

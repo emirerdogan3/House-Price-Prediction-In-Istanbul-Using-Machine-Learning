@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ev Fiyat Tahmini</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+    
+    <style>
+        /* --- GENEL AYARLAR --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f9f9f9; }
+
+        /* --- HERO SECTION & FORM CSS --- */
+        .hero-section {
+            width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.85), rgba(65, 105, 225, 0.85)), 
+                        url('https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=2071&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 50px;
+        }
+
+        header { width: 100%; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
+        .header-buttons button { padding: 8px 20px; border: none; border-radius: 5px; background-color: #ff5a5f; color: white; font-weight: 600; cursor: pointer; margin-left: 10px; transition: background 0.3s; }
+        .header-buttons button:hover { background-color: #e04e53; }
+
+        .hero-content-container { text-align: center; margin-top: 20px; width: 100%; max-width: 1000px; padding: 0 20px; }
+        .hero-title { color: white; font-size: 2rem; margin-bottom: 30px; font-weight: 700; }
+
+        /* Form Kartı Özelleştirmesi */
+        .form-card { background-color: white; border-radius: 15px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: left; }
+        .form-title { color: #333; font-size: 1.2rem; margin-bottom: 20px; font-weight: 700; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.85rem; color: #555; margin-bottom: 5px; font-weight: 600; }
+        
+        /* Input ve Select Stilleri (Senin eski koduna yeni stil uygulandı) */
+        .form-group select, .form-group input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #fff;
+            font-size: 0.95rem;
+            color: #333;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+        .form-group select:focus, .form-group input:focus { border-color: #8a2be2; box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.1); }
+        .form-group select:disabled { background-color: #f0f0f0; cursor: not-allowed; color: #999; }
+
+        .submit-container { grid-column: span 3; display: flex; justify-content: flex-end; margin-top: 10px; }
+        @media (max-width: 768px) { .submit-container { grid-column: span 1; } }
+
+        .btn-submit { background-color: #ff4d4d; color: white; border: none; padding: 12px 30px; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.3s; }
+        .btn-submit:hover { background-color: #e64545; }
+
+        .footer-note { margin-top: 30px; background: rgba(255, 255, 255, 0.25); padding: 10px 20px; border-radius: 20px; color: white; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 10px; backdrop-filter: blur(5px); }
+        .new-badge { background-color: #ff5a5f; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
+
+        /* --- ISTATISTIKLER CSS --- */
+        .stats-section { width: 100%; background-color: #fff; padding: 60px 20px; display: flex; justify-content: center; border-bottom: 1px solid #eee; }
+        .stats-container { width: 100%; max-width: 1200px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; }
+        @media (max-width: 1024px) { .stats-container { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .stats-container { grid-template-columns: 1fr; } }
+        .stat-card { background-color: #fff; border-radius: 12px; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; display: flex; flex-direction: column; align-items: flex-start; transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .icon-wrapper { display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; margin-bottom: 20px; }
+        .icon-red { background-color: #fff0f0; color: #ff5a5f; }
+        .icon-blue { background-color: #eef6ff; color: #007bff; }
+        .material-symbols-rounded { font-size: 28px; }
+        .stat-number { font-size: 1.8rem; font-weight: 800; color: #1a1a1a; margin-bottom: 5px; }
+        .stat-label { font-size: 0.9rem; color: #666; font-weight: 500; }
+
+        /* --- SUREC CSS --- */
+        .process-section { width: 100%; background-color: #fcfcfc; padding: 80px 20px; display: flex; flex-direction: column; align-items: center; }
+        .process-header { text-align: center; max-width: 800px; margin-bottom: 60px; }
+        .top-arrow { color: #ff5a5f; margin-bottom: 15px; }
+        .process-subtitle { color: #ff5a5f; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px; display: block; }
+        .process-title { font-size: 2rem; color: #1a1a1a; font-weight: 800; margin-bottom: 20px; line-height: 1.3; }
+        .process-desc { color: #666; font-size: 1rem; line-height: 1.6; }
+        .process-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px; width: 100%; max-width: 1200px; }
+        @media (max-width: 1024px) { .process-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .process-grid { grid-template-columns: 1fr; } }
+        .process-card { background-color: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: flex-start; text-align: left; transition: transform 0.3s; }
+        .process-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        .step-number { width: 32px; height: 32px; background-color: #ff5a5f; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; margin-bottom: 15px; }
+        .step-icon { color: #ff5a5f; margin-bottom: 15px; font-size: 32px; }
+        .step-title { font-size: 1.1rem; font-weight: 700; color: #222; margin-bottom: 10px; }
+        .step-desc { font-size: 0.9rem; color: #777; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <section class="hero-section">
+        <header>
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 15l-6-6-6 6"/>
+                </svg>
+            </div>
+            <div class="header-buttons">
+                <button>For Sale</button>
+                <button>For Rent</button>
+            </div>
+        </header>
+
+        <div class="hero-content-container">
+            <div style="margin-bottom: 10px;">
+                 <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 15l-6-6-6 6"/>
+                </svg>
+            </div>
+            <h1 class="hero-title">Yapay zeka ile akıllı gayrimenkul kararları.</h1>
+
+            <div class="form-card">
+                <h2 class="form-title">Gayrimenkulünüzün Değerini Öğrenin</h2>
+                
+                <form action="{{ url_for('predict') }}" method="post">
+                    <div class="form-grid">
+                        
+                        <div class="form-group">
+                            <label for="District">İlçe</label>
+                            <select name="District" id="district-select" required>
+                                <option value="" disabled selected>Seçiniz...</option>
+                                {% for district in districts %}
+                                    <option value="{{ district }}">{{ district }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Neighborhood">Mahalle</label>
+                            <select name="Neighborhood" id="neighborhood-select" required disabled>
+                                <option value="">Önce İlçe Seçiniz...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Net_M2">Net Metrekare</label>
+                            <input type="number" name="Net_M2" required placeholder="Örn: 120">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Total_Room">Oda Sayısı</label>
+                            <input type="number" name="Total_Room" required placeholder="Örn: 3">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Bathroom_Count">Banyo Sayısı</label>
+                            <input type="number" name="Bathroom_Count" required placeholder="Örn: 1">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Age">Bina Yaşı</label>
+                            <select name="Age" required>
+                                <option value="" disabled selected>Seçiniz</option>
+                                <option value="0">0 (Sıfır Bina)</option>
+                                <option value="1-5">1-5 Yaş</option>
+                                <option value="6-10">6-10 Yaş</option>
+                                <option value="11-20">11-20 Yaş</option>
+                                <option value="21-30">21-30 Yaş</option>
+                                <option value="31-40">31-40 Yaş</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Number_of_Floors">Binadaki Toplam Kat</label>
+                            <input type="number" name="Number_of_Floors" required placeholder="Örn: 10">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Floor">Bulunduğu Kat</label>
+                            <input type="number" name="Floor" required placeholder="Örn: 5">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Heating">Isıtma Tipi</label>
+                            <select name="Heating" required>
+                                <option value="" disabled selected>Seçiniz</option>
+                                <option value="Kombi-Bireysel Doğalgaz">Kombi (Doğalgaz)</option>
+                                <option value="Merkezi Sistem">Merkezi Sistem</option>
+                                <option value="Yerden Isıtma-Modern">Yerden Isıtma</option>
+                                <option value="Soba-Geleneksel">Soba</option>
+                                <option value="Diger-Belirsiz">Diğer</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="KonutTipi">Konut Tipi</label>
+                            <select name="KonutTipi" required>
+                                <option value="" disabled selected>Seçiniz</option>
+                                <option value="Daire">Daire</option>
+                                <option value="Bina">Bina</option>
+                                <option value="Mustakil">Müstakil</option>
+                                <option value="Yali">Yalı</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Tapu">Tapu Durumu</label>
+                            <select name="Tapu" required>
+                                <option value="" disabled selected>Seçiniz</option>
+                                <option value="Tam Mülkiyet">Tam Mülkiyet</option>
+                                <option value="Kat İrtifakı">Kat İrtifakı</option>
+                                <option value="Hisseli Mülkiyet">Hisseli Mülkiyet</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="In_a_Complex">Site İçerisinde mi?</label>
+                            <select name="In_a_Complex" required>
+                                <option value="" disabled selected>Seçiniz</option>
+                                <option value="1">Evet</option>
+                                <option value="0">Hayır</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Furnished_Status">Eşyalı mı?</label>
+                            <select name="Furnished_Status" required>
+                                <option value="" disabled selected>Seçiniz</option>
+                                <option value="1">Evet</option>
+                                <option value="0">Hayır</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="Is_New_Building">Yeni Bina mı?</label>
+                            <select name="Is_New_Building" required>
+                                <option value="" disabled selected>Seçiniz</option>
+                                <option value="1">Evet</option>
+                                <option value="0">Hayır</option>
+                            </select>
+                        </div>
+                        
+                        <div class="submit-container">
+                            <button type="submit" class="btn-submit">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                Fiyatı Tahmin Et
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                </div>
+            <div class="footer-note">
+                <span class="new-badge">Yeni</span>
+                <span>Atlas ile konuşarak işlemlerinizi tamamlayın →</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats-section">
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="icon-wrapper icon-red"><span class="material-symbols-rounded">apartment</span></div>
+                <h3 class="stat-number">9,2 Milyar m²</h3>
+                <p class="stat-label">E-Değerlemesi Yapılan Toplam Alan</p>
+            </div>
+            <div class="stat-card">
+                <div class="icon-wrapper icon-blue"><span class="material-symbols-rounded">location_on</span></div>
+                <h3 class="stat-number">8.710.000</h3>
+                <p class="stat-label">E-Değerlemesi Yapılan Gayrimenkul Sayısı</p>
+            </div>
+            <div class="stat-card">
+                <div class="icon-wrapper icon-red"><span class="material-symbols-rounded">person_pin</span></div>
+                <h3 class="stat-number">47.500</h3>
+                <p class="stat-label">Kayıtlı Emlak Danışmanı</p>
+            </div>
+            <div class="stat-card">
+                <div class="icon-wrapper icon-blue"><span class="material-symbols-rounded">group</span></div>
+                <h3 class="stat-number">14M+</h3>
+                <p class="stat-label">Tekil Kullanıcı</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="process-section">
+        <div class="process-header">
+            <div class="top-arrow">
+                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 15l-6-6-6 6"/>
+                </svg>
+            </div>
+            <span class="process-subtitle">Gayrimenkulünüzü Güvenle Satın</span>
+            <h2 class="process-title">Zamandan kazanın, stresten kurtulun, kazançlı çıkın.</h2>
+            <p class="process-desc">
+                Gayrimenkul satmak önemli ve stresli bir süreç. Teknolojiden faydalanarak bu süreci daha kolay ve güvenli bir şekilde tamamlamak mümkün.
+            </p>
+        </div>
+
+        <div class="process-grid">
+            <div class="process-card">
+                <div class="step-number">1</div>
+                <span class="material-symbols-rounded step-icon">edit_square</span>
+                <h4 class="step-title">Gayrimenkulünüzün Özelliklerini Girin</h4>
+                <p class="step-desc">Gayrimenkulünüzün türünü, konumunu ve detaylı özelliklerini girin.</p>
+            </div>
+            <div class="process-card">
+                <div class="step-number">2</div>
+                <span class="material-symbols-rounded step-icon">diamond</span>
+                <h4 class="step-title">Değerini Öğrenin</h4>
+                <p class="step-desc">Endeksa'nın sektör lideri otomatik değerleme modeli ile gerçek değerini saniyeler içerisinde öğrenin.</p>
+            </div>
+            <div class="process-card">
+                <div class="step-number">3</div>
+                <span class="material-symbols-rounded step-icon">person_search</span>
+                <h4 class="step-title">Sizin İçin En İyi Danışmanı Bulun</h4>
+                <p class="step-desc">Endeksa'nın benzersiz puanlama sistemi ile mülkünüzün özelliklerine ve fiyat segmentine göre en iyi danışmanı bulun.</p>
+            </div>
+            <div class="process-card">
+                <div class="step-number">4</div>
+                <span class="material-symbols-rounded step-icon">check_circle</span>
+                <h4 class="step-title">Güvenle Satın</h4>
+                <p class="step-desc">En iyi danışman ile çalıştığınızı bilerek ve Endeksa müşteri deneyimi ekibinin desteğiyle mülkünüzü satın.</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Flask'tan gelen JSON verisini al
+        const locationData = JSON.parse('{{ location_data_json|safe }}');
+
+        const districtSelect = document.getElementById('district-select');
+        const neighborhoodSelect = document.getElementById('neighborhood-select');
+
+        districtSelect.addEventListener('change', function() {
+            const selectedDistrict = this.value;
+            
+            // Mahalle kutusunu temizle
+            neighborhoodSelect.innerHTML = '<option value="">Mahalle Seçiniz...</option>';
+
+            if (selectedDistrict && locationData[selectedDistrict]) {
+                neighborhoodSelect.disabled = false;
+
+                // Seçilen ilçeye göre mahalleleri doldur
+                locationData[selectedDistrict].forEach(function(fullNeighborhoodName) {
+                    
+                    // Value: Backend'e giden "Sarıyer_Maslak Mah."
+                    const optionValue = fullNeighborhoodName;
+
+                    // Text: Ekranda görünen "Maslak Mah." ( '_' ile ayırarak)
+                    const displayText = fullNeighborhoodName.split('_')[1] || fullNeighborhoodName;
+
+                    const option = new Option(displayText, optionValue);
+                    neighborhoodSelect.add(option);
+                });
+
+            } else {
+                neighborhoodSelect.disabled = true;
+                neighborhoodSelect.innerHTML = '<option value="">Önce İlçe Seçiniz...</option>';
+            }
+        });
+    </script>
+</body>
+</html>

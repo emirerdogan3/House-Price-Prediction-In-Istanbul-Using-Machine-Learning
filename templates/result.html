@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tahmin Sonucu</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+    
+    <style>
+        /* --- MEVCUT CSS AYARLARI (AYNEN KALIYOR) --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f9f9f9; }
+
+        .hero-section {
+            width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.95), rgba(65, 105, 225, 0.95)), 
+                        url('https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=2071&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 50px;
+        }
+
+        header { width: 100%; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }
+        .logo svg { stroke: #fff; }
+        .header-buttons button { padding: 8px 20px; border: none; border-radius: 5px; background-color: #ff5a5f; color: white; font-weight: 600; cursor: pointer; margin-left: 10px; transition: background 0.3s; }
+        .header-buttons button:hover { background-color: #e04e53; }
+
+        .result-container {
+            width: 100%;
+            max-width: 900px; /* Genişliği biraz artırdım */
+            margin-top: 20px;
+            padding: 0 20px;
+            text-align: center;
+        }
+
+        .result-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .result-subtitle { color: #666; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 10px; }
+        .result-value { font-size: 2rem; color: #8a2be2; font-weight: 800; margin-bottom: 30px; line-height: 1.1; }
+
+        .risk-box { background-color: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 1px solid #eee; display: inline-block; width: 100%; }
+        .risk-label { font-size: 0.95rem; color: #555; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 5px; font-weight: 600; }
+        .risk-value { font-size: 1.5rem; font-weight: 800; display: block; }
+
+        .map-wrapper { width: 100%; height: 350px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 2px solid #fff; margin-bottom: 30px; }
+        iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+        .btn-restart { background-color: #ff5a5f; color: white; text-decoration: none; padding: 15px 40px; border-radius: 50px; font-size: 1.1rem; font-weight: bold; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(255, 90, 95, 0.3); }
+        .btn-restart:hover { background-color: #e04e53; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 90, 95, 0.4); }
+
+        /* --- YENİ EKLENEN CSS: LISTINGS AREA --- */
+        .listings-section {
+            margin-top: 40px;
+            text-align: left;
+            border-top: 1px solid #eee;
+            padding-top: 30px;
+        }
+        
+        .listings-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        /* Yükleniyor Animasyonu */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #666;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #8a2be2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* İlan Kartları Izgarası */
+        .listings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .listing-card {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .listing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .listing-img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            background-color: #ddd;
+        }
+
+        .listing-content {
+            padding: 15px;
+        }
+
+        .listing-price {
+            color: #8a2be2;
+            font-weight: 800;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .listing-title {
+            font-size: 0.9rem;
+            color: #444;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Eski/Mevcut tarayıcılar için */
+            line-clamp: 2;           /* Standart özellik (Uyarıyı kaldırmak için) */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .error-msg {
+            color: #dc3545;
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 20px;
+            background: #fff5f5;
+            border-radius: 8px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <section class="hero-section">
+        <header>
+            <div class="logo">
+                <a href="/">
+                    <!---<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 15l-6-6-6 6"/>
+                    </svg>--->
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="height: 50px; width: auto;">
+                </a>
+            </div>
+            <!---<div class="header-buttons">
+                <button>For Sale</button>
+                <button>For Rent</button>
+            </div>--->
+        </header>
+
+        <div class="result-container">
+            <div class="result-card">
+                
+                <p class="result-subtitle">Estimated Price Range</p>
+                <h1 class="result-value">{{ prediction_text }}</h1>
+
+                <div class="risk-box">
+                    <span class="risk-label">
+                        <span class="material-symbols-rounded" style="font-size: 20px;">warning</span>
+                        Regional Earthquake/Ground Risk Score
+                    </span>
+                    <span id="risk-display" class="risk-value">{{ risk_score }}</span>
+                </div>
+
+                <div class="map-wrapper">
+                    <iframe 
+                        frameborder="0" 
+                        scrolling="no" 
+                        marginheight="0" 
+                        marginwidth="0" 
+                        src="https://maps.google.com/maps?q={{ map_query }}&t=&z=14&ie=UTF8&iwloc=&output=embed">
+                    </iframe>
+                </div>
+                
+                <div class="listings-section">
+                    <h3 class="listings-title">Similar Listings on Market</h3>
+                    
+                    <div id="loading-area" class="loading-container">
+                        <div class="spinner"></div>
+                        <p>Scanning real-time listings from Hepsiemlak...</p>
+                        <small>This may take a few seconds.</small>
+                    </div>
+
+                    <div id="listings-grid" class="listings-grid" style="display: none;">
+                        </div>
+
+                    <div id="error-area" style="display: none;"></div>
+                </div>
+                <br>
+                <a href="/" class="btn-restart">
+                    <span class="material-symbols-rounded">refresh</span>
+                    Make a New Prediction
+                </a>
+
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const riskScore = parseFloat("{{ risk_score }}");
+        const riskDisplay = document.getElementById('risk-display');
+        
+        if (riskScore < 0.35) {
+            riskDisplay.style.color = "#28a745";
+            riskDisplay.innerHTML += " <br><span style='font-size:0.6em; font-weight:600; color:#28a745'>(Low Risk)</span>";
+        } else if (riskScore < 0.65) {
+            riskDisplay.style.color = "#f39c12";
+            riskDisplay.innerHTML += " <br><span style='font-size:0.6em; font-weight:600; color:#f39c12'>(Medium Risk)</span>";
+        } else {
+            riskDisplay.style.color = "#dc3545";
+            riskDisplay.innerHTML += " <br><span style='font-size:0.6em; font-weight:600; color:#dc3545'>(High Risk)</span>";
+        }
+    </script>
+
+    <script>
+        // Python'dan gelen verileri değişkenlere ata
+        const searchData = {
+            district: "{{ search_district }}",
+            neighborhood: "{{ search_neighborhood }}",
+            room: "{{ search_room }}"
+        };
+
+        const loadingArea = document.getElementById('loading-area');
+        const listingsGrid = document.getElementById('listings-grid');
+        const errorArea = document.getElementById('error-area');
+
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            fetch('/api/get-similar-listings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(searchData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingArea.style.display = 'none';
+                
+                // DATA.URL ARTIK BACKEND'DEN GELEN DOĞRU (DÜZELTİLMİŞ) URL
+                const correctUrl = data.url; 
+
+                if (data.listings && data.listings.length > 0) {
+                    listingsGrid.style.display = 'grid';
+                    
+                    data.listings.forEach(item => {
+                        const cardHTML = `
+                            <a href="${item.link}" target="_blank" class="listing-card">
+                                <img src="${item.image}" alt="Ev Resmi" class="listing-img" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+                                <div class="listing-content">
+                                    <div class="listing-price">${item.price}</div>
+                                    <div class="listing-title">${item.title}</div>
+                                </div>
+                            </a>
+                        `;
+                        listingsGrid.insertAdjacentHTML('beforeend', cardHTML);
+                    });
+
+                    // "Tümünü Gör" linkini güncelle
+                    const seeAllHTML = `<div style="grid-column: 1 / -1; text-align: center; margin-top: 10px;">
+                        <a href="${correctUrl}" target="_blank" style="color: #8a2be2; font-weight: bold; text-decoration: underline;">See all results on Hepsiemlak →</a>
+                    </div>`;
+                    listingsGrid.insertAdjacentHTML('beforeend', seeAllHTML);
+
+                } else {
+                    errorArea.style.display = 'block';
+                    // Hata mesajındaki linki de güncelle
+                    errorArea.innerHTML = `<p class="error-msg">No similiar listings found. <a href="${correctUrl}" target="_blank">Click here to check manually.</a></p>`;
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                loadingArea.style.display = 'none';
+                errorArea.style.display = 'block';
+                errorArea.innerHTML = '<p class="error-msg">Unable to fetch live listings at the moment.</p>';
+            });
+        });
+    </script>
+
+</body>
+</html>
