@@ -20,4 +20,4 @@
 
 ![Percentage Error Distribution](Figure_Percentage_Error_Distribution.png)
 
-![Istanbul VS30 Map](istanbul_vs30_haritasi.png)
+![Istanbul VS30 Map](istanbul_vs30_haritasi.jpg)
